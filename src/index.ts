@@ -42,10 +42,8 @@ export default class RestApiIntegrationPlugin extends ApiPlugin {
       const headerList = (datasourceConfiguration.headers ?? []).concat(actionConfiguration.headers ?? []);
       if (headerList) {
         headers = headerList.reduce<Record<string, unknown>>((o: Record<string, unknown>, p: Property, _i: number, _ps: Property[]) => {
-          if (!p) return o;
-          if (p?.key !== '') {
-            o[p?.key] = p?.value;
-          }
+          if (!p || !p?.key) return o;
+          o[p.key] = p?.value;
           return o;
         }, {});
       }
