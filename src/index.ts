@@ -6,7 +6,8 @@ import {
   Property,
   RawRequest,
   RestApiIntegrationActionConfiguration,
-  RestApiIntegrationDatasourceConfiguration
+  RestApiIntegrationDatasourceConfiguration,
+  REST_API_DEFAULT_USER_AGENT
 } from '@superblocksteam/shared';
 import { RestApiFields, makeCurlString } from '@superblocksteam/shared';
 import { ApiPlugin, PluginExecutionProps, updateRequestBody } from '@superblocksteam/shared-backend';
@@ -51,9 +52,19 @@ export default class RestApiIntegrationPlugin extends ApiPlugin {
       throw new IntegrationError(`Headers failed to transform, ${err.message}`);
     }
 
+    if (
+      !Object.keys(headers).some((k) => {
+        return 'user-agent' === k.toLowerCase();
+      })
+    ) {
+      headers['User-Agent'] = REST_API_DEFAULT_USER_AGENT;
+    }
+
     // TODO: Refactor and reuse the generateRequestConfig function from ApiPlugin
     const options: AxiosRequestConfig = {
       url: url.toString(),
+      // request arraybuffer and let extractResponseData figure out the correct data type for the response body
+      responseType: 'arraybuffer',
       method: actionConfiguration.httpMethod.toString() as Method,
       headers: headers,
       timeout: this.pluginConfiguration.restApiExecutionTimeoutMs,
@@ -67,7 +78,7 @@ export default class RestApiIntegrationPlugin extends ApiPlugin {
       options: options
     });
 
-    return await this.executeRequest(options);
+    return await this.executeRequest(options, actionConfiguration.responseType);
   }
 
   getRequest(
